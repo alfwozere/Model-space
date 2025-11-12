@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedded 3D Model</title>
+    <!-- Load model-viewer library from CDN -->
+    <script type="module" 
+            src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
+    </script>
+    <style>
+        /* CSS for a fixed, centered viewer */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; 
+            width: 100%; 
+            height: 100%;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: transparent; 
+        }
+        model-viewer {
+            /* Fixed pixel dimensions */
+            width: 800px;
+            height: 600px;
+            border: none;
+            border: 2px solid #334155; 
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Model loaded from a reliable CDN -->
+    <model-viewer
+        src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Box/glTF-Binary/Cube.glb"
+        alt="A standard 3D box model"
+        shadow-intensity="1.5"
+        camera-controls
+        auto-rotate>
+    </model-viewer>
+</body>
+</html>

@@ -89,13 +89,14 @@
             }
         }
 
-        // --- NEW: Live Update Listener (For local display feedback) ---
-        // When the user moves the model, update the local display instantly.
-        modelViewer.addEventListener('input', () => {
+        // --- THE FIX: RELIABLE LIVE UPDATE LISTENER ---
+        // Use 'pointermove' which fires repeatedly as the user drags the mouse/touch.
+        modelViewer.addEventListener('pointermove', () => {
+             // Only update the display locally (do not send to Zegeba yet)
             const liveOrientation = modelViewer.cameraOrbit;
             displayElement.textContent = `Moving: ${liveOrientation}`;
         });
-        // ------------------------------------------------------------------
+        // ---------------------------------------------
 
         // --- Core Listener: Receives Command from Parent (Zegeba Button) ---
         window.addEventListener('message', (event) => {

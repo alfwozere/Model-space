@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embedded 3D Model Control (Dynamic Capture)</title>
+    <title>Embedded 3D Model Control (Live Stream)</title>
     <!-- Load model-viewer library from CDN -->
     <script type="module" 
             src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
@@ -58,7 +58,7 @@
 
     <div id="controls-container">
         <!-- This display is for local feedback inside the iframe -->
-        <div id="orientation-display">Position model, then click "Capture" on the parent page.</div>
+        <div id="orientation-display">Rotate the model to stream coordinates live.</div>
     </div>
 
     <script>
@@ -67,55 +67,32 @@
 
         // Helper function to format the output string from the dynamic properties
         function getFormattedOrientation() {
-            // *** THE FINAL FIX: Using the dedicated internal getOrbit() method ***
             const orbit = modelViewer.getCameraOrbit();
             if (orbit) {
-                // Returns a string like "2.0m 45deg 70deg"
                 return orbit.toString(); 
             }
             return null;
         }
 
-        // Function to read the current coordinates and post them to the parent window
-        function captureAndPostCoords() {
-            const orientation = getFormattedOrientation();
-
-            if (orientation) { 
-                // Update the local display for feedback
-                displayElement.textContent = `Captured: ${orientation}`;
-
-                const dataToSend = {
-                    type: 'ORIENTATION_UPDATE',
-                    value: orientation
-                };
-
-                // Send the message to the parent window (Zegeba)
-                window.parent.postMessage(dataToSend, '*');
-                
-                console.log('PostMessage (Static) sent to parent:', orientation);
-            } else {
-                displayElement.textContent = `ERROR: No coordinates found. Rotate model first.`;
-                console.error('Capture failed: getOrbit() returned null.');
-            }
-        }
-
-        // --- RELIABLE LIVE UPDATE LISTENER ---
-        // Use 'pointermove' and the new function to update the display
+        // --- CORE LIVE STREAM LISTENER ---
+        // Every time the pointer moves on the model, we read the position and send it.
         modelViewer.addEventListener('pointermove', () => {
             const liveOrientation = getFormattedOrientation();
-            if (liveOrientation) {
-                displayElement.textContent = `Moving: ${liveOrientation}`;
-            }
-        });
-        // ---------------------------------------------
 
-        // --- Core Listener: Receives Command from Parent (Zegeba Button) ---
-        window.addEventListener('message', (event) => {
-            if (event.data === 'CAPTURE_COORDS_NOW') {
-                console.log('Command received: CAPTURE_COORDS_NOW');
-                captureAndPostCoords();
+            if (liveOrientation) {
+                // 1. Update the local display for feedback
+                displayElement.textContent = `Live: ${liveOrientation}`;
+
+                // 2. Send the live stream to the parent window (Zegeba)
+                window.parent.postMessage({
+                    type: 'ORIENTATION_UPDATE',
+                    value: liveOrientation
+                }, '*');
+                
+                // console.log('Live Stream Sent:', liveOrientation);
             }
         });
+        // ---------------------------------
 
         // 4. Initial load: post the starting position
         modelViewer.addEventListener('load', () => {
@@ -132,4 +109,3 @@
     </script>
 </body>
 </html>
-

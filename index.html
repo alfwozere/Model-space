@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embedded 3D Model Control</title>
+    <title>Embedded 3D Model Control (Static Capture)</title>
     <!-- Load model-viewer library from CDN -->
     <script type="module" 
             src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
@@ -17,7 +17,7 @@
             width: 100%; 
             height: 100%;
             display: flex; 
-            flex-direction: column; /* Stack controls vertically */
+            flex-direction: column; 
             justify-content: center; 
             align-items: center; 
             background-color: #f1f5f9; 
@@ -42,7 +42,7 @@
             font-size: 0.9rem;
             color: #475569;
             margin-bottom: 5px;
-            min-width: 400px; /* Ensure space for the long coordinate string */
+            min-width: 400px;
         }
     </style>
 </head>
@@ -57,51 +57,52 @@
     </model-viewer>
 
     <div id="controls-container">
-        <div id="orientation-display">Rotate the model to see its orientation appear here!</div>
+        <!-- This display is for local feedback inside the iframe -->
+        <div id="orientation-display">Position model, then click "Capture" on the parent page.</div>
     </div>
 
     <script>
         const modelViewer = document.getElementById('modelViewer');
         const displayElement = document.getElementById('orientation-display');
 
-        // --- CORE FUNCTIONALITY ---
-
-        // 1. Listen for user input on the model-viewer
-        // The 'input' event fires whenever the user rotates, pans, or zooms the model.
-        modelViewer.addEventListener('input', () => {
-            // Get the current camera-controls attribute value
+        // Function to read the current coordinates and post them to the parent window
+        function captureAndPostCoords() {
             const orientation = modelViewer.getAttribute('camera-controls');
 
             // Update the local display for feedback
-            displayElement.textContent = `Current Camera-Controls: ${orientation}`;
+            displayElement.textContent = `Captured: ${orientation}`;
 
-            // 2. Package the data for secure transfer
             const dataToSend = {
                 type: 'ORIENTATION_UPDATE',
                 value: orientation
             };
 
-            // 3. Send the message to the parent window (the Zegeba iframe host)
-            // It is safest to use '*' as the target origin here, as we don't know the exact Zegeba URL.
+            // Send the message to the parent window (Zegeba)
             window.parent.postMessage(dataToSend, '*');
             
-            console.log('PostMessage sent to parent:', orientation);
+            console.log('PostMessage (Static) sent to parent:', orientation);
+        }
+
+        // --- Core Listener: Receives Command from Parent (Zegeba Button) ---
+        window.addEventListener('message', (event) => {
+            // Check for the specific command sent by the Zegeba button
+            if (event.data === 'CAPTURE_COORDS_NOW') {
+                console.log('Command received: CAPTURE_COORDS_NOW');
+                captureAndPostCoords();
+            }
         });
 
-        // 4. Fallback for initial load: send initial position
+        // 4. Initial load: post the starting position
         modelViewer.addEventListener('load', () => {
             const initialOrientation = modelViewer.getAttribute('camera-controls');
+            displayElement.textContent = `Ready: ${initialOrientation}`;
+
+            // Post initial value to set the starting data in Zegeba
             window.parent.postMessage({
                 type: 'ORIENTATION_UPDATE',
                 value: initialOrientation
             }, '*');
         });
-        
     </script>
 </body>
 </html>
-
-
-
-
-

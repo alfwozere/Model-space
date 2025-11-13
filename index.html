@@ -67,9 +67,8 @@
 
         // Function to read the current coordinates and post them to the parent window
         function captureAndPostCoords() {
-            // *** THE FIX: Reading the live, dynamic property (.cameraOrbit) ***
-            // This property updates whenever the user moves the model, unlike the attribute.
-            const orientation = modelViewer.cameraOrbit;
+            // Reads the live, dynamic position property
+            const orientation = modelViewer.cameraOrbit; 
 
             if (orientation) { 
                 // Update the local display for feedback
@@ -90,6 +89,14 @@
             }
         }
 
+        // --- NEW: Live Update Listener (For local display feedback) ---
+        // When the user moves the model, update the local display instantly.
+        modelViewer.addEventListener('input', () => {
+            const liveOrientation = modelViewer.cameraOrbit;
+            displayElement.textContent = `Moving: ${liveOrientation}`;
+        });
+        // ------------------------------------------------------------------
+
         // --- Core Listener: Receives Command from Parent (Zegeba Button) ---
         window.addEventListener('message', (event) => {
             // Check for the specific command sent by the Zegeba button
@@ -101,7 +108,6 @@
 
         // 4. Initial load: post the starting position
         modelViewer.addEventListener('load', () => {
-            // Use cameraOrbit here for the initial value as well
             const initialOrientation = modelViewer.cameraOrbit; 
             
             displayElement.textContent = `Ready: ${initialOrientation}`;
@@ -115,3 +121,4 @@
     </script>
 </body>
 </html>
+

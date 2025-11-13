@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embedded 3D Model Control (Static Capture)</title>
+    <title>Embedded 3D Model Control (Dynamic Capture)</title>
     <!-- Load model-viewer library from CDN -->
     <script type="module" 
             src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
@@ -67,20 +67,27 @@
 
         // Function to read the current coordinates and post them to the parent window
         function captureAndPostCoords() {
-            const orientation = modelViewer.getAttribute('camera-controls');
+            // *** THE FIX: Reading the live, dynamic property (.cameraOrbit) ***
+            // This property updates whenever the user moves the model, unlike the attribute.
+            const orientation = modelViewer.cameraOrbit;
 
-            // Update the local display for feedback
-            displayElement.textContent = `Captured: ${orientation}`;
+            if (orientation) { 
+                // Update the local display for feedback
+                displayElement.textContent = `Captured: ${orientation}`;
 
-            const dataToSend = {
-                type: 'ORIENTATION_UPDATE',
-                value: orientation
-            };
+                const dataToSend = {
+                    type: 'ORIENTATION_UPDATE',
+                    value: orientation
+                };
 
-            // Send the message to the parent window (Zegeba)
-            window.parent.postMessage(dataToSend, '*');
-            
-            console.log('PostMessage (Static) sent to parent:', orientation);
+                // Send the message to the parent window (Zegeba)
+                window.parent.postMessage(dataToSend, '*');
+                
+                console.log('PostMessage (Static) sent to parent:', orientation);
+            } else {
+                displayElement.textContent = `ERROR: No coordinates found. Rotate model first.`;
+                console.error('Capture failed: cameraOrbit was null or empty.');
+            }
         }
 
         // --- Core Listener: Receives Command from Parent (Zegeba Button) ---
@@ -94,7 +101,9 @@
 
         // 4. Initial load: post the starting position
         modelViewer.addEventListener('load', () => {
-            const initialOrientation = modelViewer.getAttribute('camera-controls');
+            // Use cameraOrbit here for the initial value as well
+            const initialOrientation = modelViewer.cameraOrbit; 
+            
             displayElement.textContent = `Ready: ${initialOrientation}`;
 
             // Post initial value to set the starting data in Zegeba
@@ -106,4 +115,3 @@
     </script>
 </body>
 </html>
-

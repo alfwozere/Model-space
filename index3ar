@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedded 3D Model Control (Live Stream)</title>
+    <!-- Load model-viewer library from CDN -->
+    <script type="module" 
+            src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
+    </script>
+    <style>
+        /* CSS for centering the viewer and adding some aesthetic appeal */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; 
+            width: 100%; 
+            height: 100%;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: #f1f5f9; 
+            font-family: sans-serif;
+        }
+        model-viewer {
+            width: 800px;
+            height: 600px;
+            border: 2px solid #334155; 
+            border-radius: 12px;
+            background-color: #E2E8F0; 
+        }
+        #controls-container {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        #orientation-display {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 5px;
+            min-width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <model-viewer
+        id="modelViewer"
+        src="./Arek.glb" 
+        alt="A standard 3D box model"
+        shadow-intensity="1.5"
+        camera-controls="1m 30deg 75deg"
+        auto-rotate>
+    </model-viewer>
+
+    <div id="controls-container">
+        <!-- This display is for local feedback inside the iframe -->
+        <div id="orientation-display">Rotate the model to stream coordinates live.</div>
+    </div>
+
+    <script>
+        const modelViewer = document.getElementById('modelViewer');
+        const displayElement = document.getElementById('orientation-display');
+
+        // Helper function to format the output string from the dynamic properties
+        function getFormattedOrientation() {
+            const orbit = modelViewer.getCameraOrbit();
+            if (orbit) {
+                return orbit.toString(); 
+            }
+            return null;
+        }
+
+        // --- CORE LIVE STREAM LISTENER ---
+        // Every time the pointer moves on the model, we read the position and send it.
+        modelViewer.addEventListener('pointermove', () => {
+            const liveOrientation = getFormattedOrientation();
+
+            if (liveOrientation) {
+                // 1. Update the local display for feedback
+                displayElement.textContent = `Live: ${liveOrientation}`;
+
+                // 2. Send the live stream to the parent window (Zegeba)
+                window.parent.postMessage({
+                    type: 'ORIENTATION_UPDATE',
+                    value: liveOrientation
+                }, '*');
+                
+                // console.log('Live Stream Sent:', liveOrientation);
+            }
+        });
+        // ---------------------------------
+
+        // 4. Initial load: post the starting position
+        modelViewer.addEventListener('load', () => {
+            const initialOrientation = getFormattedOrientation(); 
+            
+            displayElement.textContent = `Ready: ${initialOrientation}`;
+
+            // Post initial value to set the starting data in Zegeba
+            window.parent.postMessage({
+                type: 'ORIENTATION_UPDATE',
+                value: initialOrientation
+            }, '*');
+        });
+    </script>
+</body>
+</html>
+
+
